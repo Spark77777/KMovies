@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Upload Movie</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <style>
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+
+      background: #111;
+
+      color: white;
+
+      font-family: Arial, sans-serif;
+
+      display: flex;
+
+      justify-content: center;
+
+      align-items: center;
+
+      min-height: 100vh;
+
+      padding: 20px;
+    }
+
+    .container {
+
+      background: #1c1c1c;
+
+      padding: 30px;
+
+      border-radius: 15px;
+
+      width: 100%;
+
+      max-width: 500px;
+    }
+
+    h1 {
+
+      margin-bottom: 25px;
+
+      text-align: center;
+
+      color: red;
+    }
+
+    input {
+
+      width: 100%;
+
+      padding: 12px;
+
+      margin-bottom: 15px;
+
+      border: none;
+
+      border-radius: 8px;
+
+      font-size: 16px;
+    }
+
+    button {
+
+      width: 100%;
+
+      padding: 14px;
+
+      border: none;
+
+      border-radius: 8px;
+
+      background: red;
+
+      color: white;
+
+      font-size: 18px;
+
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    #status {
+
+      margin-top: 20px;
+
+      text-align: center;
+
+      color: #ccc;
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h1>Upload Movie</h1>
+
+    <input
+      type="text"
+      id="title"
+      placeholder="Movie Title"
+    >
+
+    <input
+      type="text"
+      id="imdb"
+      placeholder="IMDb ID (example: tt15327088)"
+    >
+
+    <input
+      type="file"
+      id="movieFile"
+      accept="video/mp4"
+    >
+
+    <button onclick="uploadMovie()">
+      Upload Movie
+    </button>
+
+    <p id="status"></p>
+
+  </div>
+
+  <script>
+
+    // SUPABASE CONFIG
+
+    const SUPABASE_URL =
+      "YOUR_SUPABASE_URL";
+
+    const SUPABASE_KEY =
+      "YOUR_SUPABASE_ANON_KEY";
+
+    const supabaseClient =
+      supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+
+    // Upload Function
+
+    async function uploadMovie() {
+
+      const title =
+        document.getElementById("title").value;
+
+      const imdbID =
+        document.getElementById("imdb").value;
+
+      const file =
+        document.getElementById("movieFile")
+          .files[0];
+
+      const status =
+        document.getElementById("status");
+
+
+      // Validation
+
+      if (!title || !imdbID || !file) {
+
+        status.innerText =
+          "Please fill all fields.";
+
+        return;
+      }
+
+      status.innerText =
+        "Uploading movie...";
+
+
+      // Unique File Name
+
+      const fileName =
+        Date.now() + "-" + file.name;
+
+
+      // Upload To Storage
+
+      const {
+        data: uploadData,
+        error: uploadError
+      } =
+        await supabaseClient.storage
+          .from("movies")
+          .upload(fileName, file);
+
+
+      if (uploadError) {
+
+        console.log(uploadError);
+
+        status.innerText =
+          "Upload failed.";
+
+        return;
+      }
+
+
+      // Get Public URL
+
+      const {
+        data: publicUrlData
+      } =
+        supabaseClient.storage
+          .from("movies")
+          .getPublicUrl(fileName);
+
+      const publicUrl =
+        publicUrlData.publicUrl;
+
+
+      // Insert Into Database
+
+      const {
+        error: dbError
+      } =
+        await supabaseClient
+          .from("movies")
+          .insert([
+            {
+              title: title,
+              imdb_id: imdbID,
+              video_url: publicUrl
+            }
+          ]);
+
+
+      if (dbError) {
+
+        console.log(dbError);
+
+        status.innerText =
+          "Database insert failed.";
+
+        return;
+      }
+
+
+      // Success
+
+      status.innerText =
+        "Movie uploaded successfully!";
+
+
+      // Clear Inputs
+
+      document.getElementById("title").value = "";
+
+      document.getElementById("imdb").value = "";
+
+      document.getElementById("movieFile").value = "";
+    }
+
+  </script>
+
+</body>
+
+</html>
