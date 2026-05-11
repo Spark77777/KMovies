@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>KMovies</title>
+
+  <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+  <!-- HEADER -->
+
+  <header>
+
+    <h1>KMovies</h1>
+
+    <input
+      type="text"
+      id="searchBar"
+      placeholder="Search movies..."
+      autocomplete="off"
+    >
+
+  </header>
+
+
+  <!-- MOVIES -->
+
+  <main>
+
+    <div
+      class="movie-container"
+      id="movieContainer"
+    ></div>
+
+  </main>
+
+
+  <!-- POPUP -->
+
+  <div
+    class="popup"
+    id="popup"
+  >
+
+    <div
+      class="popup-content"
+      id="popupContent"
+    >
+
+    </div>
+
+  </div>
+
+
+  <!-- SUPABASE SDK -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+
+  <!-- SUPABASE CONFIG -->
+
+  <script>
+
+    const SUPABASE_URL =
+      "https://ubdckzxawjrcmbdizrfl.supabase.co";
+
+    const SUPABASE_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViZGNrenhhd2pyY21iZGl6cmZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MTUyNjUsImV4cCI6MjA5NDA5MTI2NX0.v_-9yjIqq1NzdR0IAqxvBUuOhYMxWptb_8IkOa71zI0";
+
+    const supabaseClient =
+      supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+  </script>
+
+
+  <!-- MAIN SCRIPT -->
+
+  <script src="script.js"></script>
+
+</body>
+
+</html>
