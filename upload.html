@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Upload Movie</title>
+
+  <!-- SUPABASE -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+
+  <!-- STYLE -->
+
+  <style>
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+
+      background: #111;
+
+      color: white;
+
+      font-family: Arial, sans-serif;
+
+      display: flex;
+
+      justify-content: center;
+
+      align-items: center;
+
+      min-height: 100vh;
+
+      padding: 20px;
+    }
+
+    .container {
+
+      background: #1c1c1c;
+
+      width: 100%;
+      max-width: 500px;
+
+      padding: 30px;
+
+      border-radius: 18px;
+
+      box-shadow:
+        0 0 20px rgba(0,0,0,0.5);
+    }
+
+    h1 {
+
+      text-align: center;
+
+      margin-bottom: 25px;
+
+      color: red;
+
+      font-size: 32px;
+    }
+
+    input {
+
+      width: 100%;
+
+      padding: 14px;
+
+      margin-bottom: 18px;
+
+      border: none;
+
+      border-radius: 10px;
+
+      font-size: 16px;
+
+      background: #2a2a2a;
+
+      color: white;
+    }
+
+    input::placeholder {
+
+      color: #aaa;
+    }
+
+    button {
+
+      width: 100%;
+
+      padding: 15px;
+
+      border: none;
+
+      border-radius: 12px;
+
+      background: linear-gradient(
+        135deg,
+        #ff0000,
+        #c40000
+      );
+
+      color: white;
+
+      font-size: 18px;
+
+      font-weight: bold;
+
+      cursor: pointer;
+
+      transition: 0.3s;
+    }
+
+    button:hover {
+
+      transform: scale(1.02);
+
+      opacity: 0.95;
+    }
+
+    button:active {
+
+      transform: scale(0.98);
+    }
+
+    #status {
+
+      margin-top: 20px;
+
+      text-align: center;
+
+      color: #ccc;
+
+      line-height: 1.6;
+    }
+
+    @media (max-width: 600px) {
+
+      .container {
+
+        padding: 22px;
+      }
+
+      h1 {
+
+        font-size: 28px;
+      }
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h1>Upload Movie</h1>
+
+
+    <!-- MOVIE TITLE -->
+
+    <input
+      type="text"
+      id="title"
+      placeholder="Movie Title"
+    >
+
+
+    <!-- IMDB ID -->
+
+    <input
+      type="text"
+      id="imdb"
+      placeholder="IMDb ID (Example: tt0816692)"
+    >
+
+
+    <!-- MOVIE FILE -->
+
+    <input
+      type="file"
+      id="movieFile"
+      accept="video/mp4"
+    >
+
+
+    <!-- UPLOAD BUTTON -->
+
+    <button onclick="uploadMovie()">
+      Upload Movie
+    </button>
+
+
+    <!-- STATUS -->
+
+    <p id="status"></p>
+
+  </div>
+
+
+  <!-- SCRIPT -->
+
+  <script>
+
+    // SUPABASE CONFIG
+
+    const SUPABASE_URL =
+      "https://ubdckzxawjrcmbdizrfl.supabase.co";
+
+    const SUPABASE_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViZGNrenhhd2pyY21iZGl6cmZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MTUyNjUsImV4cCI6MjA5NDA5MTI2NX0.v_-9yjIqq1NzdR0IAqxvBUuOhYMxWptb_8IkOa71zI0";
+
+
+    const supabaseClient =
+      supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+
+    // UPLOAD MOVIE
+
+    async function uploadMovie() {
+
+      const title =
+        document.getElementById("title")
+          .value.trim();
+
+      const imdbID =
+        document.getElementById("imdb")
+          .value.trim();
+
+      const file =
+        document.getElementById("movieFile")
+          .files[0];
+
+      const status =
+        document.getElementById("status");
+
+
+      // VALIDATION
+
+      if (!title || !imdbID || !file) {
+
+        status.innerText =
+          "Please fill all fields.";
+
+        return;
+      }
+
+
+      status.innerText =
+        "Uploading movie...";
+
+
+      // UNIQUE FILE NAME
+
+      const fileName =
+        Date.now() + "-" + file.name;
+
+
+      // UPLOAD TO STORAGE
+
+      const {
+        error: uploadError
+      } =
+        await supabaseClient.storage
+          .from("movies")
+          .upload(fileName, file);
+
+
+      // HANDLE ERROR
+
+      if (uploadError) {
+
+        console.log(uploadError);
+
+        status.innerText =
+          "Movie upload failed.";
+
+        return;
+      }
+
+
+      // GET PUBLIC URL
+
+      const {
+        data: publicUrlData
+      } =
+        supabaseClient.storage
+          .from("movies")
+          .getPublicUrl(fileName);
+
+
+      const publicUrl =
+        publicUrlData.publicUrl;
+
+
+      // INSERT DATABASE ROW
+
+      const {
+        error: dbError
+      } =
+        await supabaseClient
+          .from("movies")
+          .insert([
+            {
+              imdb_id: imdbID,
+              title: title,
+              video_url: publicUrl
+            }
+          ]);
+
+
+      // HANDLE DATABASE ERROR
+
+      if (dbError) {
+
+        console.log(dbError);
+
+        status.innerText =
+          "Database insert failed.";
+
+        return;
+      }
+
+
+      // SUCCESS
+
+      status.innerText =
+        "Movie uploaded successfully!";
+
+
+      // CLEAR FIELDS
+
+      document.getElementById("title").value = "";
+
+      document.getElementById("imdb").value = "";
+
+      document.getElementById("movieFile").value = "";
+    }
+
+  </script>
+
+</body>
+
+</html>
